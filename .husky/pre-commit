@@ -1,0 +1,36 @@
+echo "🔍 Verificando possíveis secrets nos arquivos staged..."
+
+PATTERNS='(AWS_(ACCESS|SECRET)_KEY(ID)?|SECRET|PASSWORD|API[_-]?KEY|PRIVATE[_-]?KEY|TOKEN)[[:space:]]*=[[:space:]]*.+'
+
+FILES=$(git diff --cached --name-only | grep -vE '^\.husky/' || true)
+
+if [ -z "$FILES" ]; then
+  echo "ℹ️ Nenhum arquivo relevante nos staged para verificar. Prosseguindo..."
+  exit 0
+fi
+
+FOUND_SECRET=0
+
+for FILE in $FILES; do
+  echo "📄 Checando: $FILE"
+
+  MATCHED_LINES=$(git show ":$FILE" | grep -En "$PATTERNS")
+
+  if [ -n "$MATCHED_LINES" ]; then
+    SAFE=$(echo "$MATCHED_LINES" | grep -Ev '=(local_password|dummy|dev_token|123456|test123)$')
+
+    if [ -n "$SAFE" ]; then
+      echo "🚨 Possível secret encontrado no arquivo: $FILE"
+      echo "$SAFE"
+      FOUND_SECRET=1
+    fi
+  fi
+done
+
+if [ "$FOUND_SECRET" -eq 1 ]; then
+  echo "❌ Commit cancelado: um ou mais arquivos contém possíveis secrets."
+  exit 1
+fi
+
+echo "✅ Nenhum secret sensível encontrado. Prosseguindo com o commit."
+exit 0
