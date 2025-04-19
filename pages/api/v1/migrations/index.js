@@ -25,7 +25,6 @@ async function connectToDatabase(request, response, next) {
     migrationsTable: "pgmigrations",
   };
   await next();
-  await dbClient.end();
 }
 
 async function getHandler(request, response) {
