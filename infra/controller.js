@@ -16,9 +16,11 @@ function onErrorHandler(error, request, response) {
   response.status(publicErrorObject.statusCode).json(publicErrorObject);
 }
 
-export default {
+const controller = {
   errorHandlers: {
     onNoMatch: onNoMatchHandler,
     onError: onErrorHandler,
   },
 };
+
+export default controller;
